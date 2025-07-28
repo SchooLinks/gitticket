@@ -158,9 +158,9 @@ def test_update_commit_message_no_modification_if_commit_is_a_fixup(mock_branch_
 
 
 @pytest.mark.parametrize('test_data', (
-    ('fix FE some message', 'SP-1234', 'fix(FE): SP-1234 some message'),
-    ('feat UI awesome feature', 'SP-5678', 'feat(UI): SP-5678 awesome feature'),
-    ('chore DEPS update dependencies', 'SP-9012', 'chore(DEPS): SP-9012 update dependencies'),
+    ('fix(FE): some message', 'SP-1234', 'fix(FE): SP-1234 some message'),
+    ('feat(UI): awesome feature', 'SP-5678', 'feat(UI): SP-5678 awesome feature'),
+    ('chore(DEPS): update dependencies', 'SP-9012', 'chore(DEPS): SP-9012 update dependencies'),
 ))
 @mock.patch(TESTING_MODULE + '.get_branch_name')
 def test_update_commit_message_conventional_commit_structure(mock_branch_name, test_data, tmpdir):
@@ -171,6 +171,76 @@ def test_update_commit_message_conventional_commit_structure(mock_branch_name, t
     update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
                           'regex_match', '{ticket} {commit_msg}')
     assert path.read() == expected_msg
+
+
+@pytest.mark.parametrize('test_data', (
+    ('FiX(cp): some message', 'SP-1234', 'fix(CP): SP-1234 some message'),
+    ('FEAT(ui): awesome feature', 'SP-5678', 'feat(UI): SP-5678 awesome feature'),
+    ('ChOrE(deps): update dependencies', 'SP-9012', 'chore(DEPS): SP-9012 update dependencies'),
+))
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_case_normalization(mock_branch_name, test_data, tmpdir):
+    commit_msg, ticket, expected_msg = test_data
+    mock_branch_name.return_value = "feature/{0}/some-branch-name".format(ticket)
+    path = tmpdir.join('file.txt')
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    assert path.read() == expected_msg
+
+
+@pytest.mark.parametrize('invalid_type', (
+    'invalid',
+    'unknown',
+    'notallowed',
+))
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_invalid_type(mock_branch_name, mock_exit, mock_stderr_write, invalid_type, tmpdir):
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    commit_msg = f"{invalid_type}(CP): some message"
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    mock_exit.assert_called_once_with(1)
+    mock_stderr_write.assert_any_call(f"Error: Invalid commit type '{invalid_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
+
+
+@pytest.mark.parametrize('invalid_scope', (
+    'INVALID',
+    'UNKNOWN',
+    'NOTALLOWED',
+))
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_invalid_scope(mock_branch_name, mock_exit, mock_stderr_write, invalid_scope, tmpdir):
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    commit_msg = f"fix({invalid_scope}): some message"
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    mock_exit.assert_called_once_with(1)
+    mock_stderr_write.assert_any_call(f"Error: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+
+
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_invalid_format(mock_branch_name, mock_exit, mock_stderr_write, tmpdir):
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    commit_msg = "invalid format message"
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    mock_exit.assert_called_once_with(1)
+    mock_stderr_write.assert_any_call("Error: Commit message must follow the format 'type(scope): message'\n")
+    mock_stderr_write.assert_any_call(f"Allowed types: {', '.join(ALLOWED_TYPES)}\n")
+    mock_stderr_write.assert_any_call(f"Allowed scopes: {', '.join(ALLOWED_SCOPES)}\n")
 
 
 @mock.patch(TESTING_MODULE + '.subprocess')
