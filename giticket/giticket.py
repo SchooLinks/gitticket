@@ -13,6 +13,97 @@ import six
 underscore_split_mode = 'underscore_split'
 regex_match_mode = 'regex_match'
 
+# Allowed commit types (always converted to lowercase)
+ALLOWED_TYPES = [
+    'build',
+    'chore',
+    'ci',
+    'docs',
+    'feat',
+    'fix',
+    'perf',
+    'refactor',
+    'revert',
+    'style',
+    'test',
+    'enh'
+]
+
+# Allowed commit scopes (always converted to uppercase)
+ALLOWED_SCOPES = [
+    "AL",
+    "ASM",
+    "AUTH",
+    "BADGE",
+    "BASE",
+    "CAM",
+    "CAR",
+    "CFG",
+    "CHECK",
+    "COMMENT",
+    "CP",
+    "CSL",
+    "CTE",
+    "DMD",
+    "DOC",
+    "DP",
+    "DS",
+    "DU",
+    "ELE",
+    "ES",
+    "EXDS",
+    "EXP",
+    "FAFSA",
+    "FEED",
+    "FNL",
+    "FORM",
+    "GEO",
+    "GOAL",
+    "GOL",
+    "GUARD",
+    "I18N",
+    "ILP",
+    "IPDB",
+    "IPPM",
+    "IS",
+    "K12ADMIN",
+    "KRI",
+    "LNP",
+    "MEET",
+    "MEMBER",
+    "MNGMT",
+    "MSG",
+    "NCAA",
+    "NOTE",
+    "NOTIF",
+    "ONB",
+    "OPPS",
+    "ORGPROF",
+    "PROF",
+    "QNA",
+    "RC",
+    "RDC",
+    "RES",
+    "RLBS",
+    "RLP",
+    "RONTAG",
+    "ROS",
+    "SCG",
+    "SCHOL",
+    "SCORE",
+    "SDH",
+    "SET",
+    "SIS",
+    "SS",
+    "STATS",
+    "STDH",
+    "SYE",
+    "TAG",
+    "TODO",
+    "UI",
+    "VR",
+]
+
 
 def update_commit_message(filename, regex, mode, format_string):
     with io.open(filename, 'r+') as fd:
@@ -32,13 +123,25 @@ def update_commit_message(filename, regex, mode, format_string):
             tickets = [t.strip() for t in tickets]
 
             # Parse commit message for conventional commit structure
-            # Expected format: "type scope message"
-            parts = commit_msg.split(' ', 2)
+            # Expected format: "type(scope): message"
+            type_scope_pattern = r'^([a-zA-Z]+)\(([a-zA-Z0-9]+)\):\s*(.*)$'
+            match_res = re.match(type_scope_pattern, commit_msg)
 
-            if len(parts) >= 2:
-                commit_type = parts[0]  # e.g., "fix"
-                commit_scope = parts[1]  # e.g., "FE"
-                commit_message = parts[2] if len(parts) > 2 else ""
+            if match_res:
+                # Extract parts from the regex match
+                commit_type = match_res.group(1).lower()  # Convert type to lowercase
+                commit_scope = match_res.group(2).upper()  # Convert scope to uppercase
+                commit_message = match_res.group(3)
+
+                # Validate commit type
+                if commit_type not in ALLOWED_TYPES:
+                    sys.stderr.write(f"Error: Invalid commit type '{commit_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
+                    sys.exit(1)
+
+                # Validate commit scope
+                if commit_scope not in ALLOWED_SCOPES:
+                    sys.stderr.write(f"Error: Invalid commit scope '{commit_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+                    sys.exit(1)
 
                 # Format as conventional commit: type(scope): ticket message
                 new_commit_msg = "{type}({scope}): {ticket} {message}".format(
@@ -48,11 +151,11 @@ def update_commit_message(filename, regex, mode, format_string):
                     message=commit_message
                 )
             else:
-                # Fallback to original format if not enough parts
-                new_commit_msg = format_string.format(
-                    ticket=tickets[0], tickets=', '.join(tickets),
-                    commit_msg=commit_msg
-                )
+                # If the format doesn't match, inform the user about the expected format
+                sys.stderr.write("Error: Commit message must follow the format 'type(scope): message'\n")
+                sys.stderr.write(f"Allowed types: {', '.join(ALLOWED_TYPES)}\n")
+                sys.stderr.write(f"Allowed scopes: {', '.join(ALLOWED_SCOPES)}\n")
+                sys.exit(1)
 
             contents[0] = six.text_type(new_commit_msg + "\n")
             fd.seek(0)

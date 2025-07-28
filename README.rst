@@ -37,12 +37,24 @@ For e.g. if you name your branch ``JIRA-1234_awesome_feature`` and commit ``Fix 
 Conventional Commit Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Giticket now supports conventional commit structure. If your commit message follows the format ``type scope message``, it will be automatically formatted as ``type(scope): ticket message``.
+Giticket now supports and enforces conventional commit structure. Your commit message must follow the format ``type(scope): message``, and it will be automatically formatted as ``type(scope): ticket message``.
+
+The commit message must adhere to the following rules:
+
+- **Type**: Must be one of the allowed types (case-insensitive, will be converted to lowercase):
+
+  ``build``, ``chore``, ``ci``, ``docs``, ``feat``, ``fix``, ``perf``, ``refactor``, ``revert``, ``style``, ``test``, ``enh``
+
+- **Scope**: Must be one of the allowed scopes (case-insensitive, will be converted to uppercase):
+
+  ``AL``, ``ASM``, ``AUTH``, ``BADGE``, ``BASE``, ``CAM``, ``CAR``, ``CFG``, ``CHECK``, ``COMMENT``, ``CP``, ``CSL``, ``CTE``, ``DMD``, ``DOC``, ``DP``, ``DS``, ``DU``, ``ELE``, ``ES``, ``EXDS``, ``EXP``, ``FAFSA``, ``FEED``, ``FNL``, ``FORM``, ``GEO``, ``GOAL``, ``GOL``, ``GUARD``, ``I18N``, ``ILP``, ``IPDB``, ``IPPM``, ``IS``, ``K12ADMIN``, ``KRI``, ``LNP``, ``MEET``, ``MEMBER``, ``MNGMT``, ``MSG``, ``NCAA``, ``NOTE``, ``NOTIF``, ``ONB``, ``OPPS``, ``ORGPROF``, ``PROF``, ``QNA``, ``RC``, ``RDC``, ``RES``, ``RLBS``, ``RLP``, ``RONTAG``, ``ROS``, ``SCG``, ``SCHOL``, ``SCORE``, ``SDH``, ``SET``, ``SIS``, ``SS``, ``STATS``, ``STDH``, ``SYE``, ``TAG``, ``TODO``, ``UI``, ``VR``
 
 For example:
 
-- If your branch is ``feature/SP-1234/awesome-feature`` and you commit ``fix FE some bug``, the commit will be updated to ``fix(FE): SP-1234 some bug``.
-- If your branch is ``feature/SP-5678/new-ui`` and you commit ``feat UI awesome feature``, the commit will be updated to ``feat(UI): SP-5678 awesome feature``.
+- If your branch is ``feature/SP-1234/awesome-feature`` and you commit ``fix(CP): some bug``, the commit will be updated to ``fix(CP): SP-1234 some bug``.
+- If your branch is ``feature/SP-5678/new-ui`` and you commit ``feat(UI): awesome feature``, the commit will be updated to ``feat(UI): SP-5678 awesome feature``.
+
+If either the type or scope is invalid, or if the commit message format is incorrect, the commit process will be stopped with an error message. This ensures that all commits follow the conventional commit structure.
 
 This helps maintain a consistent commit message format following conventional commit standards while automatically including the ticket number from your branch name.
 
