@@ -8,6 +8,9 @@ import six
 from giticket.giticket import get_branch_name
 from giticket.giticket import main
 from giticket.giticket import update_commit_message
+from giticket.giticket import find_closest_match
+from giticket.giticket import ALLOWED_TYPES
+from giticket.giticket import ALLOWED_SCOPES
 
 TESTING_MODULE = 'giticket.giticket'
 
@@ -205,7 +208,28 @@ def test_update_commit_message_invalid_type(mock_branch_name, mock_exit, mock_st
     update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
                           'regex_match', '{ticket} {commit_msg}')
     mock_exit.assert_called_once_with(1)
-    mock_stderr_write.assert_any_call(f"Error: Invalid commit type '{invalid_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
+    mock_stderr_write.assert_any_call(f"WRONG TYPE DETECTED: Invalid commit type '{invalid_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
+
+
+@pytest.mark.parametrize('test_data', (
+    ('fet', 'feat'),
+    ('fixx', 'fix'),
+    ('enhh', 'enh'),
+))
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_type_suggestion(mock_branch_name, mock_exit, mock_stderr_write, test_data, tmpdir):
+    invalid_type, suggested_type = test_data
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    commit_msg = f"{invalid_type}(CP): some message"
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    mock_exit.assert_called_once_with(1)
+    mock_stderr_write.assert_any_call(f"Do you mean `{suggested_type}` instead of `{invalid_type}`?\n")
+    mock_stderr_write.assert_any_call(f"WRONG TYPE DETECTED: Invalid commit type '{invalid_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
 
 
 @pytest.mark.parametrize('invalid_scope', (
@@ -224,7 +248,28 @@ def test_update_commit_message_invalid_scope(mock_branch_name, mock_exit, mock_s
     update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
                           'regex_match', '{ticket} {commit_msg}')
     mock_exit.assert_called_once_with(1)
-    mock_stderr_write.assert_any_call(f"Error: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+    mock_stderr_write.assert_any_call(f"WRONG SCOPE DETECTED: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+
+
+@pytest.mark.parametrize('test_data', (
+    ('CPPP', 'CP'),
+    ('UII', 'UI'),
+    ('DOCC', 'DOC'),
+))
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_scope_suggestion(mock_branch_name, mock_exit, mock_stderr_write, test_data, tmpdir):
+    invalid_scope, suggested_scope = test_data
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    commit_msg = f"fix({invalid_scope}): some message"
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    mock_exit.assert_called_once_with(1)
+    mock_stderr_write.assert_any_call(f"Do you mean `{suggested_scope}` instead of `{invalid_scope}`?\n")
+    mock_stderr_write.assert_any_call(f"WRONG SCOPE DETECTED: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
 
 
 @mock.patch(TESTING_MODULE + '.sys.stderr.write')
@@ -238,9 +283,56 @@ def test_update_commit_message_invalid_format(mock_branch_name, mock_exit, mock_
     update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
                           'regex_match', '{ticket} {commit_msg}')
     mock_exit.assert_called_once_with(1)
-    mock_stderr_write.assert_any_call("Error: Commit message must follow the format 'type(scope): message'\n")
+    mock_stderr_write.assert_any_call("WRONG FORMAT DETECTED: Commit message must follow the format 'type(scope): message'\n")
     mock_stderr_write.assert_any_call(f"Allowed types: {', '.join(ALLOWED_TYPES)}\n")
     mock_stderr_write.assert_any_call(f"Allowed scopes: {', '.join(ALLOWED_SCOPES)}\n")
+
+
+@pytest.mark.parametrize('test_data', (
+    (('fet', 'feat'), ('CPPP', 'CP')),
+    (('fixx', 'fix'), ('UII', 'UI')),
+    (('enhh', 'enh'), ('DOCC', 'DOC')),
+))
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_both_invalid(mock_branch_name, mock_exit, mock_stderr_write, test_data, tmpdir):
+    (invalid_type, suggested_type), (invalid_scope, suggested_scope) = test_data
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    commit_msg = f"{invalid_type}({invalid_scope}): some message"
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+
+    # Check that sys.exit was called once with code 1
+    mock_exit.assert_called_once_with(1)
+
+    # Check that all error messages and suggestions were displayed
+    mock_stderr_write.assert_any_call(f"Do you mean `{suggested_type}` instead of `{invalid_type}`?\n")
+    mock_stderr_write.assert_any_call(f"WRONG TYPE DETECTED: Invalid commit type '{invalid_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
+    mock_stderr_write.assert_any_call(f"Do you mean `{suggested_scope}` instead of `{invalid_scope}`?\n")
+    mock_stderr_write.assert_any_call(f"WRONG SCOPE DETECTED: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+
+
+def test_find_closest_match():
+    # Test with types (lowercase)
+    assert find_closest_match('fet', ALLOWED_TYPES) == 'feat'
+    assert find_closest_match('fixx', ALLOWED_TYPES) == 'fix'
+    assert find_closest_match('enhh', ALLOWED_TYPES) == 'enh'
+
+    # Test with scopes (uppercase)
+    assert find_closest_match('CP', ALLOWED_SCOPES) == 'CP'
+    assert find_closest_match('CPPP', ALLOWED_SCOPES) == 'CP'
+    assert find_closest_match('UII', ALLOWED_SCOPES) == 'UI'
+
+    # Test with no good match
+    assert find_closest_match('zzzzz', ALLOWED_TYPES) is None
+    assert find_closest_match('ZZZZZ', ALLOWED_SCOPES) is None
+
+    # Test with empty input
+    assert find_closest_match('', ALLOWED_TYPES) is None
+    assert find_closest_match(None, ALLOWED_TYPES) is None
 
 
 @mock.patch(TESTING_MODULE + '.subprocess')

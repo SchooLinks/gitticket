@@ -10,6 +10,52 @@ import sys
 
 import six
 
+def find_closest_match(input_str, valid_options):
+    """
+    Find the closest match for input_str in valid_options.
+    Returns the closest match or None if no good match is found.
+    """
+    if not input_str or not valid_options:
+        return None
+
+    # Convert input to the same case as valid options for comparison
+    # We'll assume the first valid option's case is representative
+    if valid_options and valid_options[0].isupper():
+        input_str = input_str.upper()
+    else:
+        input_str = input_str.lower()
+
+    # Simple algorithm to find closest match
+    best_match = None
+    best_score = float('inf')
+
+    for option in valid_options:
+        # Calculate Levenshtein distance (or a simpler approximation)
+        # Lower score means more similar
+        score = 0
+        option_compare = option.upper() if option.isupper() else option.lower()
+
+        # Simple character-by-character comparison
+        # This is a simplified version of edit distance
+        for i in range(min(len(input_str), len(option_compare))):
+            if input_str[i] != option_compare[i]:
+                score += 1
+
+        # Add penalty for length difference
+        score += abs(len(input_str) - len(option_compare))
+
+        # Update best match if this is better
+        if score < best_score:
+            best_score = score
+            best_match = option
+
+    # Only suggest if the match is reasonably close
+    # (adjust threshold as needed)
+    if best_score <= max(len(input_str) // 2, 2):
+        return best_match
+
+    return None
+
 underscore_split_mode = 'underscore_split'
 regex_match_mode = 'regex_match'
 
@@ -133,14 +179,29 @@ def update_commit_message(filename, regex, mode, format_string):
                 commit_scope = match_res.group(2).upper()  # Convert scope to uppercase
                 commit_message = match_res.group(3)
 
+                # Collect validation errors
+                errors = []
+
                 # Validate commit type
                 if commit_type not in ALLOWED_TYPES:
-                    sys.stderr.write(f"Error: Invalid commit type '{commit_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
-                    sys.exit(1)
+                    # Try to find a similar type to suggest
+                    suggested_type = find_closest_match(commit_type, ALLOWED_TYPES)
+                    if suggested_type:
+                        errors.append(f"Do you mean `{suggested_type}` instead of `{commit_type}`?")
+                    errors.append(f"WRONG TYPE DETECTED: Invalid commit type '{commit_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}")
 
                 # Validate commit scope
                 if commit_scope not in ALLOWED_SCOPES:
-                    sys.stderr.write(f"Error: Invalid commit scope '{commit_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+                    # Try to find a similar scope to suggest
+                    suggested_scope = find_closest_match(commit_scope, ALLOWED_SCOPES)
+                    if suggested_scope:
+                        errors.append(f"Do you mean `{suggested_scope}` instead of `{commit_scope}`?")
+                    errors.append(f"WRONG SCOPE DETECTED: Invalid commit scope '{commit_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}")
+
+                # If there are any errors, display them and exit
+                if errors:
+                    for error in errors:
+                        sys.stderr.write(error + "\n")
                     sys.exit(1)
 
                 # Format as conventional commit: type(scope): ticket message
@@ -152,7 +213,7 @@ def update_commit_message(filename, regex, mode, format_string):
                 )
             else:
                 # If the format doesn't match, inform the user about the expected format
-                sys.stderr.write("Error: Commit message must follow the format 'type(scope): message'\n")
+                sys.stderr.write("WRONG FORMAT DETECTED: Commit message must follow the format 'type(scope): message'\n")
                 sys.stderr.write(f"Allowed types: {', '.join(ALLOWED_TYPES)}\n")
                 sys.stderr.write(f"Allowed scopes: {', '.join(ALLOWED_SCOPES)}\n")
                 sys.exit(1)
