@@ -315,6 +315,29 @@ def test_update_commit_message_both_invalid(mock_branch_name, mock_exit, mock_st
     mock_stderr_write.assert_any_call(f"WRONG SCOPE DETECTED: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
 
 
+@pytest.mark.parametrize('test_data', (
+    ('fic(asdf): SP-1234 something', 'fic', 'asdf'),
+    ('blah(INVALID): SP-5678 message', 'blah', 'INVALID'),
+))
+@mock.patch(TESTING_MODULE + '.sys.stderr.write')
+@mock.patch(TESTING_MODULE + '.sys.exit')
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_invalid_with_ticket(mock_branch_name, mock_exit, mock_stderr_write, test_data, tmpdir):
+    commit_msg, invalid_type, invalid_scope = test_data
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    path.write(commit_msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+
+    # Check that sys.exit was called once with code 1
+    mock_exit.assert_called_once_with(1)
+
+    # Check that error messages were displayed for both type and scope
+    mock_stderr_write.assert_any_call(f"WRONG TYPE DETECTED: Invalid commit type '{invalid_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}\n")
+    mock_stderr_write.assert_any_call(f"WRONG SCOPE DETECTED: Invalid commit scope '{invalid_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}\n")
+
+
 def test_find_closest_match():
     # Test with types (lowercase)
     assert find_closest_match('fet', ALLOWED_TYPES) == 'feat'

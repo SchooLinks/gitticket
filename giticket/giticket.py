@@ -159,8 +159,48 @@ def update_commit_message(filename, regex, mode, format_string):
         branch = get_branch_name()
 
         # Bail if commit message starts with “fixup!” or commit message already contains tickets
-        if commit_msg.startswith('fixup!') or any(re.search(regex, content) for content in contents):
+        if commit_msg.startswith('fixup!'):
             return
+
+        # Parse commit message for conventional commit structure regardless of ticket presence
+        # Expected format: "type(scope): message"
+        type_scope_pattern = r'^([a-zA-Z]+)\(([a-zA-Z0-9]+)\):\s*(.*)$'
+        match_res = re.match(type_scope_pattern, commit_msg)
+
+        if match_res:
+            # Extract parts from the regex match
+            commit_type = match_res.group(1).lower()  # Convert type to lowercase
+            commit_scope = match_res.group(2).upper()  # Convert scope to uppercase
+            commit_message = match_res.group(3)
+
+            # Collect validation errors
+            errors = []
+
+            # Validate commit type
+            if commit_type not in ALLOWED_TYPES:
+                # Try to find a similar type to suggest
+                suggested_type = find_closest_match(commit_type, ALLOWED_TYPES)
+                if suggested_type:
+                    errors.append(f"Do you mean `{suggested_type}` instead of `{commit_type}`?")
+                errors.append(f"WRONG TYPE DETECTED: Invalid commit type '{commit_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}")
+
+            # Validate commit scope
+            if commit_scope not in ALLOWED_SCOPES:
+                # Try to find a similar scope to suggest
+                suggested_scope = find_closest_match(commit_scope, ALLOWED_SCOPES)
+                if suggested_scope:
+                    errors.append(f"Do you mean `{suggested_scope}` instead of `{commit_scope}`?")
+                errors.append(f"WRONG SCOPE DETECTED: Invalid commit scope '{commit_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}")
+
+            # If there are any errors, display them and exit
+            if errors:
+                for error in errors:
+                    sys.stderr.write(error + "\n")
+                sys.exit(1)
+
+            # If commit message already contains tickets, don't modify it
+            if any(re.search(regex, content) for content in contents):
+                return
 
         tickets = re.findall(regex, branch)
         if tickets:
@@ -168,42 +208,7 @@ def update_commit_message(filename, regex, mode, format_string):
                 tickets = [branch.split(six.text_type('_'))[0]]
             tickets = [t.strip() for t in tickets]
 
-            # Parse commit message for conventional commit structure
-            # Expected format: "type(scope): message"
-            type_scope_pattern = r'^([a-zA-Z]+)\(([a-zA-Z0-9]+)\):\s*(.*)$'
-            match_res = re.match(type_scope_pattern, commit_msg)
-
             if match_res:
-                # Extract parts from the regex match
-                commit_type = match_res.group(1).lower()  # Convert type to lowercase
-                commit_scope = match_res.group(2).upper()  # Convert scope to uppercase
-                commit_message = match_res.group(3)
-
-                # Collect validation errors
-                errors = []
-
-                # Validate commit type
-                if commit_type not in ALLOWED_TYPES:
-                    # Try to find a similar type to suggest
-                    suggested_type = find_closest_match(commit_type, ALLOWED_TYPES)
-                    if suggested_type:
-                        errors.append(f"Do you mean `{suggested_type}` instead of `{commit_type}`?")
-                    errors.append(f"WRONG TYPE DETECTED: Invalid commit type '{commit_type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}")
-
-                # Validate commit scope
-                if commit_scope not in ALLOWED_SCOPES:
-                    # Try to find a similar scope to suggest
-                    suggested_scope = find_closest_match(commit_scope, ALLOWED_SCOPES)
-                    if suggested_scope:
-                        errors.append(f"Do you mean `{suggested_scope}` instead of `{commit_scope}`?")
-                    errors.append(f"WRONG SCOPE DETECTED: Invalid commit scope '{commit_scope}'. Allowed scopes are: {', '.join(ALLOWED_SCOPES)}")
-
-                # If there are any errors, display them and exit
-                if errors:
-                    for error in errors:
-                        sys.stderr.write(error + "\n")
-                    sys.exit(1)
-
                 # Format as conventional commit: type(scope): ticket message
                 new_commit_msg = "{type}({scope}): {ticket} {message}".format(
                     type=commit_type,
