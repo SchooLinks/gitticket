@@ -2,16 +2,6 @@
 giticket
 ========
 
-.. image:: https://travis-ci.com/milin/giticket.svg?branch=master
-        :target: https://travis-ci.org/milin/giticket
-
-.. image:: https://readthedocs.org/projects/giticket/badge/?version=latest
-        :target: https://giticket.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
-
-
-
-
 Auto add ticket info to your git commits.
 
 
