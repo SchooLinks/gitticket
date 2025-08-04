@@ -2,6 +2,8 @@
 giticket
 ========
 
+This is originally a fork from milin/giticket for team specific requirements like conventional commits etc
+
 Auto add ticket info to your git commits.
 
 
