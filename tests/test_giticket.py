@@ -160,6 +160,20 @@ def test_update_commit_message_no_modification_if_commit_is_a_fixup(mock_branch_
     assert path.read() == msg
 
 
+@pytest.mark.parametrize('msg', (
+    """Merge branch 'feat-cte-dashboard' into feat-SP-19124-add-support-for-arbitrary-fields-for-list-page""",
+    """Merge pull request #123 from org/branch-name""",
+))
+@mock.patch(TESTING_MODULE + '.get_branch_name')
+def test_update_commit_message_no_modification_for_merge_commits(mock_branch_name, msg, tmpdir):
+    mock_branch_name.return_value = "feature/SP-1234/some-branch-name"
+    path = tmpdir.join('file.txt')
+    path.write(msg)
+    update_commit_message(six.text_type(path), r'[A-Z]+-\d+',
+                          'regex_match', '{ticket} {commit_msg}')
+    assert path.read() == msg
+
+
 @pytest.mark.parametrize('test_data', (
     ('fix(FE): some message', 'SP-1234', 'fix(FE): SP-1234 some message'),
     ('feat(UI): awesome feature', 'SP-5678', 'feat(UI): SP-5678 awesome feature'),

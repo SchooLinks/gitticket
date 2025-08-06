@@ -158,8 +158,9 @@ def update_commit_message(filename, regex, mode, format_string):
         # Check if we can grab ticket info from branch name.
         branch = get_branch_name()
 
-        # Bail if commit message starts with “fixup!” or commit message already contains tickets
-        if commit_msg.startswith('fixup!'):
+        # Bail if commit message starts with "fixup!", "Merge branch", "Merge pull request" 
+        # or commit message already contains tickets
+        if commit_msg.startswith('fixup!') or commit_msg.startswith('Merge branch') or commit_msg.startswith('Merge pull request'):
             return
 
         # Parse commit message for conventional commit structure regardless of ticket presence
