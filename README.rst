@@ -4,6 +4,14 @@ giticket
 
 This is originally a fork from milin/giticket for team specific requirements like conventional commits etc
 
+Update workflow
+---------------
+1. Raise PR towards master branch
+2. Get approval for PR
+3. Merge to master
+4. Create a new tag + release
+5. Update sl-py .pre-commit-config.yaml with new version
+
 Auto add ticket info to your git commits.
 
 
