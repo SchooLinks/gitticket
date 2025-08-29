@@ -34,7 +34,7 @@ The commit message must adhere to the following rules:
 
 - **Scope**: Must be one of the allowed scopes (case-insensitive, will be converted to uppercase):
 
-  ``AL``, ``ASM``, ``AUTH``, ``BADGE``, ``BASE``, ``CAM``, ``CAR``, ``CFG``, ``CHECK``, ``COMMENT``, ``CP``, ``CSL``, ``CTE``, ``DMD``, ``DOC``, ``DP``, ``DS``, ``DU``, ``ELE``, ``ES``, ``EXDS``, ``EXP``, ``FAFSA``, ``FEED``, ``FNL``, ``FORM``, ``GEO``, ``GOAL``, ``GOL``, ``GUARD``, ``I18N``, ``ILP``, ``IPDB``, ``IPPM``, ``IS``, ``K12ADMIN``, ``KRI``, ``LNP``, ``MEET``, ``MEMBER``, ``MNGMT``, ``MSG``, ``NCAA``, ``NOTE``, ``NOTIF``, ``ONB``, ``OPPS``, ``ORGPROF``, ``PROF``, ``QNA``, ``RC``, ``RDC``, ``RES``, ``RLBS``, ``RLP``, ``RONTAG``, ``ROS``, ``SCG``, ``SCHOL``, ``SCORE``, ``SDH``, ``SET``, ``SIS``, ``SS``, ``STATS``, ``STDH``, ``SYE``, ``TAG``, ``TODO``, ``UI``, ``VR``
+  ``AL``,``ANM``,``ASM``,``AUTH``,``AUTO``,``BADGE``,``BASE``,``BRIDGE``,``CAM``,``CAR``,``CFG``,``CHECK``,``COMMENT``,``CP``,``CSL``,``CTE``,``DMD``,``DOC``,``DP``,``DS``,``DU``,``ELE``,``ES``,``EXDS``,``EXP``,``FAFSA``,``FEED``,``FNL``,``FORM``,``GEO``,``GOAL``,``GOL``,``GUARD``,``I18N``,``ILP``,``IPDB``,``IPPM``,``IS``,``K12ADMIN``,``KRI``,``LNP``,``MEET``,``MEMBER``,``MNGMT``,``MSG``,``NCAA``,``NOTE``,``NOTIF``,``ONB``,``OPPS``,``ORGPROF``,``PROF``,``QNA``,``RC``,``RDC``,``RES``,``RLBS``,``RLP``,``RONTAG``,``ROS``,``SCG``,``SCHOL``,``SCORE``,``SDH``,``SET``,``SIS``,``SS``,``STATS``,``STDH``,``SYE``,``TAG``,``TODO``,``UI``,``VR``
 
 For example:
 
