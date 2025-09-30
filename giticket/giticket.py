@@ -77,7 +77,7 @@ ALLOWED_TYPES = [
 
 # Allowed commit scopes (always converted to uppercase)
 ALLOWED_SCOPES = [
-    "AL","ANM","ASM","AUTH","AUTO","BADGE","BASE","BRIDGE","CAM","CAR","CFG","CHECK","COMMENT","CP","CSL","CTE","DMD","DOC","DP","DS","DU","ELE","ES","EXDS","EXP","FAFSA","FEED","FNL","FORM","GEO","GOAL","GOL","GUARD","I18N","ILP","IPDB","IPPM","IS","K12ADMIN","KRI","LNP","MEET","MEMBER","MNGMT","MSG","NCAA","NOTE","NOTIF","ONB","OPPS","ORGPROF","PROF","QNA","RC","RDC","RES","RLBS","RLP","RONTAG","ROS","SCG","SCHOL","SCORE","SDH","SET","SIS","SS","STATS","STDH","SYE","TAG","TODO","UI","VR"
+    "AL","ANM","ASM","AUTH","AUTO","BADGE","BASE","BRIDGE","CAM","CAR","CFG","CHECK","COMMENT","CP","CSL","CTE","DMD","DOC","DP","DS","DU","ELE","ES","EXDS","EXP","FAFSA","FEED","FNL","FORM","GEO","GOAL","GOL","GUARD","I18N","ILP","IPDB","IPPM","IS","K12ADMIN","KRI","LNP","MEET","MEMBER","MNGMT","MSG","NCAA","NOTE","NOTIF","ONB","OPPS","ORGPROF","PROF","QNA","RC","RDC","RES","RLBS","RLP","RONTAG","ROS","SCG","SCHOL","SCORE","SDH","SET","SIS","SS","STATS","STDH","SYE","TAG","TODO","UI","VR","LLM"
 ]
 
 
@@ -88,7 +88,7 @@ def update_commit_message(filename, regex, mode, format_string):
         # Check if we can grab ticket info from branch name.
         branch = get_branch_name()
 
-        # Bail if commit message starts with "fixup!", "Merge branch", "Merge pull request" 
+        # Bail if commit message starts with "fixup!", "Merge branch", "Merge pull request"
         # or commit message already contains tickets
         if commit_msg.startswith('fixup!') or commit_msg.startswith('Merge branch') or commit_msg.startswith('Merge pull request'):
             return
